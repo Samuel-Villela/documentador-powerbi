@@ -15,9 +15,13 @@ Fluxo:
    - Boas práticas (roda o linter.py só se ativado)
    - Visuais (lê a camada de relatório via extracao_visuais.py só se ativado)
    Qualquer combinação é permitida — inclusive só uma das três, ou nenhuma.
-5. gerador.py monta o documento final combinando as seções ativas.
+   Um quarto toggle, independente dos três acima, controla uma exportação
+   separada: um .docx contendo somente as medidas DAX (nome + código),
+   gerado via exportador_medidas_docx.py.
+5. gerador.py monta o documento final (Markdown) combinando as seções ativas.
 6. O resultado é exibido na tela (pré-visualização) e disponibilizado via
-   botão de download.
+   botão de download. A exportação de medidas em Word, quando ativada, é
+   disponibilizada em um botão de download separado.
 
 Execução: `streamlit run src/app.py` (a partir da raiz do projeto).
 """
@@ -29,6 +33,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from exportador_medidas import gerar_docx_medidas
 from extracao import RelatorioSemModeloError, extrair_modelo
 from gerador import renderizar_documentacao
 
@@ -78,9 +83,26 @@ with st.sidebar:
         ),
     )
     st.divider()
+    st.header("Exportações adicionais")
+    incluir_exportacao_medidas_docx = st.toggle(
+        "Medidas DAX em Word (.docx)",
+        value=False,
+        help=(
+            "Gera um arquivo .docx separado contendo somente as medidas DAX "
+            "do modelo: para cada medida, o nome seguido do código DAX "
+            "completo — sem tabelas, colunas, relacionamentos ou qualquer "
+            "outra informação. Não substitui a documentação em Markdown "
+            "acima; é um arquivo adicional, gerado apenas se este toggle "
+            "estiver ativo."
+        ),
+    )
+    st.divider()
     st.caption(
         "Nenhum dado sai da sua máquina: a leitura do .pbix e a geração do "
         "documento acontecem localmente, nesta sessão."
+    )
+    st.caption(
+        "Samuel Villela"
     )
 
 arquivo = st.file_uploader("Arquivo .pbix", type=["pbix"])
@@ -88,6 +110,8 @@ arquivo = st.file_uploader("Arquivo .pbix", type=["pbix"])
 if "documento_gerado" not in st.session_state:
     st.session_state.documento_gerado = None
     st.session_state.nome_arquivo_saida = None
+    st.session_state.docx_medidas = None
+    st.session_state.nome_arquivo_medidas_docx = None
 
 gerar = st.button("Gerar documentação", type="primary", disabled=arquivo is None)
 
@@ -124,6 +148,28 @@ if gerar and arquivo is not None:
 
             st.session_state.documento_gerado = documento
             st.session_state.nome_arquivo_saida = f"{Path(arquivo.name).stem}_documentacao.md"
+
+            # Exportação de medidas em Word — estritamente opt-in (mesmo
+            # princípio já aplicado às demais seções) e independente dos três
+            # toggles acima: só roda se o toggle específico estiver ativo, e
+            # só é possível quando há um modelo semântico embutido (thin
+            # reports não têm medidas para exportar).
+            if incluir_exportacao_medidas_docx and modelo is not None:
+                st.session_state.docx_medidas = gerar_docx_medidas(modelo)
+                st.session_state.nome_arquivo_medidas_docx = (
+                    f"{Path(arquivo.name).stem}_medidas_dax.docx"
+                )
+            else:
+                st.session_state.docx_medidas = None
+                st.session_state.nome_arquivo_medidas_docx = None
+                if incluir_exportacao_medidas_docx and modelo is None:
+                    st.info(
+                        "Não foi possível gerar a exportação de medidas em "
+                        "Word: este arquivo não tem um modelo semântico "
+                        "embutido (thin report / conexão ao vivo), então não "
+                        "há medidas DAX para exportar."
+                    )
+
             if modelo is not None:
                 st.success(
                     f"Documentação gerada com sucesso: {modelo.quantidade_tabelas} "
@@ -134,20 +180,39 @@ if gerar and arquivo is not None:
                 st.success("Documentação dos visuais gerada com sucesso.")
         except RelatorioSemModeloError:
             st.session_state.documento_gerado = None
+            st.session_state.docx_medidas = None
+            st.session_state.nome_arquivo_medidas_docx = None
         except Exception as exc:  # noqa: BLE001 — queremos mostrar qualquer erro ao usuário, não só os esperados
             st.session_state.documento_gerado = None
+            st.session_state.docx_medidas = None
+            st.session_state.nome_arquivo_medidas_docx = None
             st.error(f"Ocorreu um erro inesperado ao processar o arquivo: {exc}")
         finally:
             if caminho_temporario is not None:
                 caminho_temporario.unlink(missing_ok=True)
 
-if st.session_state.documento_gerado:
-    st.download_button(
-        "⬇️ Baixar documentação (Markdown)",
-        data=st.session_state.documento_gerado,
-        file_name=st.session_state.nome_arquivo_saida,
-        mime="text/markdown",
-    )
-    st.divider()
-    st.subheader("Pré-visualização")
-    st.markdown(st.session_state.documento_gerado)
+if st.session_state.documento_gerado or st.session_state.docx_medidas:
+    colunas_download = st.columns(2)
+
+    with colunas_download[0]:
+        if st.session_state.documento_gerado:
+            st.download_button(
+                "⬇️ Baixar documentação (Markdown)",
+                data=st.session_state.documento_gerado,
+                file_name=st.session_state.nome_arquivo_saida,
+                mime="text/markdown",
+            )
+
+    with colunas_download[1]:
+        if st.session_state.docx_medidas:
+            st.download_button(
+                "⬇️ Baixar medidas DAX (Word)",
+                data=st.session_state.docx_medidas,
+                file_name=st.session_state.nome_arquivo_medidas_docx,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+
+    if st.session_state.documento_gerado:
+        st.divider()
+        st.subheader("Pré-visualização")
+        st.markdown(st.session_state.documento_gerado)
