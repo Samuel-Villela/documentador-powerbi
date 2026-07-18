@@ -1,0 +1,30 @@
+# Documentação do Modelo — {{ nome_arquivo }}
+
+*Documento gerado automaticamente em {{ gerado_em.strftime('%d/%m/%Y %H:%M') }}*
+{% if secoes_incluidas %}
+*Seções incluídas: {{ secoes_incluidas|join(", ") }}*
+{% endif %}
+{% if notas %}
+{% for nota in notas %}
+
+> ℹ️ {{ nota }}
+{% endfor %}
+{% endif %}
+
+{% include "secao_visao_geral.md.j2" %}
+
+{% if incluir_modelagem %}
+{% include "secao_modelagem.md.j2" %}
+
+{% endif %}
+{% if incluir_visuais %}
+{% include "secao_visuais.md.j2" %}
+
+{% endif %}
+{% if incluir_boas_praticas %}
+{% include "secao_boas_praticas.md.j2" %}
+
+{% endif %}
+{% if not incluir_modelagem and not incluir_visuais and not incluir_boas_praticas %}
+_Nenhuma seção de conteúdo foi selecionada. Ative pelo menos uma das opções — modelagem, boas práticas ou visuais — para gerar o restante do documento._
+{% endif %}

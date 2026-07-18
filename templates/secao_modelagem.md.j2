@@ -1,0 +1,97 @@
+## Tabelas
+
+{% if modelo.tabelas %}
+{% for tabela in modelo.tabelas %}
+### {{ tabela.nome }}
+
+{% if tabela.colunas %}
+| Coluna | Tipo | Cardinalidade | Calculada? |
+|---|---|---|---|
+{% for coluna in tabela.colunas %}
+| {{ coluna.nome }} | {{ coluna.tipo_dado }} | {{ coluna.cardinalidade if coluna.cardinalidade is not none else "—" }} | {{ "Sim" if coluna.e_calculada else "Não" }} |
+{% endfor %}
+{% if tabela.colunas|selectattr("e_calculada")|list %}
+
+Colunas calculadas desta tabela:
+
+{% for coluna in tabela.colunas %}
+{% if coluna.e_calculada %}
+**{{ coluna.nome }}**
+```dax
+{{ coluna.expressao }}
+```
+{% endif %}
+{% endfor %}
+{% endif %}
+{% else %}
+_Nenhuma coluna encontrada nesta tabela._
+{% endif %}
+
+{% endfor %}
+{% else %}
+_Nenhuma tabela encontrada neste modelo._
+{% endif %}
+
+{% if modelo.tabelas_calculadas %}
+## Tabelas calculadas (DAX)
+
+{% for tabela_calc in modelo.tabelas_calculadas %}
+### {{ tabela_calc.nome }}
+
+```dax
+{{ tabela_calc.expressao_dax }}
+```
+
+{% endfor %}
+{% endif %}
+
+## Medidas DAX
+
+{% if modelo.medidas %}
+{% for pasta, medidas in modelo.medidas_por_pasta().items() %}
+### 📁 {{ pasta }}
+
+{% for medida in medidas %}
+**{{ medida.nome }}** _(tabela: {{ medida.tabela }})_
+{% if medida.descricao %}
+
+> {{ medida.descricao }}
+{% endif %}
+
+```dax
+{{ medida.expressao }}
+```
+
+{% endfor %}
+
+{% endfor %}
+{% else %}
+_Nenhuma medida DAX encontrada neste modelo._
+{% endif %}
+
+## Relacionamentos
+
+{% if modelo.relacionamentos %}
+| Origem | Destino | Cardinalidade | Direção do filtro | Ativo |
+|---|---|---|---|---|
+{% for rel in modelo.relacionamentos %}
+| {{ rel.tabela_origem }}.{{ rel.coluna_origem }} | {{ rel.tabela_destino }}.{{ rel.coluna_destino }} | {{ rel.cardinalidade }} | {{ rel.direcao_filtro }} | {{ "Sim" if rel.ativo else "Não (inativo)" }} |
+{% endfor %}
+{% else %}
+_Nenhum relacionamento encontrado neste modelo._
+{% endif %}
+
+## Power Query (M)
+
+{% if modelo.power_query %}
+{% for consulta in modelo.power_query %}
+### {{ consulta.tabela }}
+
+```m
+{{ consulta.expressao_m }}
+```
+
+{% endfor %}
+{% else %}
+_Nenhuma consulta Power Query encontrada neste modelo._
+{% endif %}

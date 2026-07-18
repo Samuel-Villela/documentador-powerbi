@@ -1,0 +1,31 @@
+## Visão geral
+
+{% if modelo %}
+| Métrica | Valor |
+|---|---|
+| Tabelas | {{ modelo.quantidade_tabelas }} |
+| Medidas DAX | {{ modelo.quantidade_medidas }} |
+| Relacionamentos | {{ modelo.quantidade_relacionamentos }} |
+{% if modelo.tabelas_calculadas %}
+| Tabelas calculadas | {{ modelo.tabelas_calculadas|length }} |
+{% endif %}
+{% if incluir_visuais and relatorio_visual %}
+| Páginas do relatório | {{ relatorio_visual.quantidade_paginas }} |
+| Visuais no relatório | {{ relatorio_visual.quantidade_visuais_total }} |
+{% endif %}
+{% if modelo.metadados.versao_power_bi_desktop %}
+| Versão do Power BI Desktop na última gravação | {{ modelo.metadados.versao_power_bi_desktop }} |
+{% endif %}
+{% if modelo.metadados.tamanho_bytes %}
+| Tamanho do modelo (dados em memória) | {{ "%.2f"|format(modelo.metadados.tamanho_bytes / 1024 / 1024) }} MB |
+{% endif %}
+{% else %}
+_Sem modelo semântico embutido neste arquivo._
+{% if incluir_visuais and relatorio_visual %}
+
+| Métrica | Valor |
+|---|---|
+| Páginas do relatório | {{ relatorio_visual.quantidade_paginas }} |
+| Visuais no relatório | {{ relatorio_visual.quantidade_visuais_total }} |
+{% endif %}
+{% endif %}

@@ -1,0 +1,20 @@
+## Boas práticas de modelagem — pontos de atenção
+
+{% if pontos_atencao %}
+Foram encontrados **{{ pontos_atencao|length }}** ponto(s) de atenção neste modelo. Eles estão organizados por regra abaixo, cada um indicando *o que* foi encontrado e *por que* costuma ser considerado um ponto de atenção.
+
+{% for regra, pontos in pontos_por_regra.items() %}
+### {{ regra }}
+
+{% for ponto in pontos %}
+- **[{{ ponto.severidade.value|upper }}]** {{ ponto.mensagem }}{% if ponto.localizacao %} _(local: {{ ponto.localizacao }})_{% endif %}
+
+{% endfor %}
+
+{% endfor %}
+{% else %}
+Nenhum ponto de atenção encontrado — o modelo está de acordo com as boas práticas verificadas por esta ferramenta. 🎉
+{% endif %}
+
+---
+_Esta seção é gerada automaticamente por um conjunto de regras heurísticas e não substitui a revisão de um analista experiente. Use-a como ponto de partida para a revisão do modelo._

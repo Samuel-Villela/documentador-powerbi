@@ -1,0 +1,34 @@
+## Visuais e páginas do relatório
+
+{% if erro_visuais %}
+> ⚠️ Não foi possível gerar esta seção: {{ erro_visuais }}
+{% elif relatorio_visual and relatorio_visual.paginas %}
+{% for pagina in relatorio_visual.paginas %}
+### {{ pagina.ordem }}. {{ pagina.nome }}
+
+{% if pagina.visuais %}
+{% for visual in pagina.visuais %}
+{% set sufixo_titulo = ' — "' ~ visual.titulo ~ '"' if visual.titulo else '' %}
+- **{{ visual.tipo }}**{{ sufixo_titulo }}
+{% if visual.campos %}
+{% for campo in visual.campos %}
+{% set valor_campo = (campo.tabela ~ "." ~ campo.campo) if (campo.tabela and campo.campo) else campo.referencia %}
+{% set sufixo_medida = " _(medida)_" if campo.e_medida else "" %}
+{% set sufixo_agregacao = " _(agregação `" ~ campo.agregacao_implicita ~ "` aplicada pelo visual)_" if campo.agregacao_implicita else "" %}
+  - _{{ campo.papel }}_: {{ valor_campo }}{{ sufixo_medida }}{{ sufixo_agregacao }}
+{% endfor %}
+{% else %}
+  - _(nenhum campo identificado neste visual)_
+{% endif %}
+
+{% endfor %}
+{% else %}
+_Nenhum visual encontrado nesta página._
+{% endif %}
+
+{% endfor %}
+{% else %}
+_Nenhuma página com visuais foi encontrada neste relatório._
+{% endif %}
+
+> ⚠️ Esta seção é extraída da camada de relatório do `.pbix` (`Report/Layout`), cujo formato não é documentado oficialmente pela Microsoft — a extração é *best-effort*. Tipos de visual não reconhecidos aparecem com o nome técnico original, e referências de campo mais complexas são mostradas em sua forma bruta.
