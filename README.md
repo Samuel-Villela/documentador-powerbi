@@ -28,7 +28,6 @@ documentador-powerbi/
 │   ├── secao_modelagem.md.j2      # Só se "Modelagem" ativado
 │   ├── secao_visuais.md.j2        # Só se "Visuais" ativado
 │   └── secao_boas_praticas.md.j2  # Só se "Boas práticas" ativado
-├── exemplos/               # Arquivos .pbix de teste (normal + thin reports)
 └── requirements.txt
 ```
 
