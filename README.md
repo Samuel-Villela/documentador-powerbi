@@ -1,5 +1,22 @@
 # Documentador Automático de Modelos Power BI
 
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="docs/images/home-dark.png" width="220"><br>
+      <b>Tela inicial fundo dark</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/exemplo-medidas.png" width="220"><br>
+      <b>Funcionamento do documentador</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/exemplo-exportacao-medidas.png" width="220"><br>
+      <b>Exportação DOCX</b>
+    </td>
+  </tr>
+</table>
+
 Ferramenta em Python que lê arquivos `.pbix` localmente (sem precisar do Power BI
 Desktop aberto e sem acesso a ambientes externos) e gera automaticamente uma
 documentação em Markdown combinando até três seções **independentes**:
@@ -9,7 +26,8 @@ documentação em Markdown combinando até três seções **independentes**:
 3. **Boas práticas** — pontos de atenção sobre a modelagem (regras heurísticas).
 
 Cada uma tem seu próprio toggle na interface; qualquer combinação é permitida
-(as três, só uma, ou duas quaisquer).
+(as três, só uma, ou duas quaisquer). Também há uma exportação independente em
+Word (`.docx`) contendo somente as medidas DAX do modelo.
 
 ## Estrutura
 
@@ -20,6 +38,7 @@ documentador-powerbi/
 │   ├── extracao_visuais.py  # Extração de páginas/visuais (Report/Layout)
 │   ├── modelos.py           # Dataclasses/pydantic (Tabela, Medida, Visual, Página...)
 │   ├── linter.py            # Regras de boas práticas (opcional)
+│   ├── exportador_medidas.py # Exportação DOCX somente das medidas DAX
 │   ├── gerador.py           # Orquestração das 3 seções + renderização Jinja2
 │   └── app.py                # Interface Streamlit
 ├── templates/
@@ -34,9 +53,8 @@ documentador-powerbi/
 ## Status
 
 Implementado e testado (extração real com `pbixray` para o modelo semântico,
-e um parser próprio para a camada de visuais). `exemplos/` já contém arquivos
-`.pbix` de exemplo público para testar a ferramenta de ponta a ponta,
-incluindo dois "thin reports".
+um parser próprio para a camada de visuais e exportação `.docx` das medidas
+DAX).
 
 ## Instalação e uso
 
@@ -46,7 +64,8 @@ streamlit run src/app.py
 ```
 
 Depois é só abrir o endereço indicado pelo Streamlit, enviar um `.pbix`,
-escolher quais das três seções incluir e clicar em "Gerar documentação".
+escolher quais das três seções incluir, opcionalmente ativar a exportação das
+medidas DAX em Word, e clicar em "Gerar documentação".
 
 ## Uso via código (sem interface)
 
@@ -55,9 +74,10 @@ import sys
 sys.path.insert(0, "src")  # ou rode com PYTHONPATH=src
 
 from extracao import extrair_modelo, RelatorioSemModeloError
+from exportador_medidas import gerar_docx_medidas
 from gerador import renderizar_documentacao
 
-caminho = "exemplos/Adventure Works, Internet Sales.pbix"
+caminho = "caminho/para/seu-arquivo.pbix"
 
 try:
     modelo = extrair_modelo(caminho)
@@ -72,6 +92,10 @@ documento = renderizar_documentacao(
     incluir_visuais=True,
 )
 print(documento)
+
+if modelo is not None:
+    with open("medidas_dax.docx", "wb") as arquivo:
+        arquivo.write(gerar_docx_medidas(modelo))
 ```
 
 ## Design das três seções independentes
