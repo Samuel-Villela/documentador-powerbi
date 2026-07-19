@@ -136,8 +136,6 @@ bruto, e referências de campo mais complexas (agregações aplicadas
 diretamente pelo visual, campos calculados no próprio relatório) são
 mostradas em sua forma bruta, em vez de travar a geração do documento.
 
----
-
 ## Desenvolvedor
 
 Este projeto foi desenvolvido por **Samuel da Rocha Villela**.
